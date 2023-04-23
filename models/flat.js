@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
+const User = require("./user");
+
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 function generateDefaultUsernameAndPassword() {
     return `flat-${this.floorNumber}-${this.number}`;
@@ -23,20 +26,14 @@ const FlatSchema = new mongoose.Schema(
             type: Number,
             required: [true, "Maintenance price is required!"],
         },
-        userName: {
-            type: String,
-            required: [true, "Username is required!"],
-            default: generateDefaultUsernameAndPassword,
-        },
-        password: {
-            type: String,
-            required: true,
-            minlength: [6, "Password must be more than 6 characters"],
-            default: generateDefaultUsernameAndPassword,
+        owner: {
+            type: ObjectId,
+            required: [true, "User is required!"],
+            ref: "User",
         },
         tower: {
             type: ObjectId,
-            required: true,
+            required: [true, "Tower is required!"],
             ref: "Tower",
         },
     },
@@ -47,23 +44,28 @@ const FlatSchema = new mongoose.Schema(
 
 FlatSchema.methods.toJSON = function () {
     const flat = this.toObject();
-    delete flat.userName;
-    delete flat.password;
     delete flat.createdAt;
     delete flat.updatedAt;
     delete flat.__v;
     return flat;
 };
 
+// FlatSchema.pre("save", async function (next) {
+//     if (this.isNew && !this.owner) {
+//         try {
+//             const user = new User();
+//             await user.save();
+//             this.owner = user._id; // set the user field in the Flat document to the newly created user's _id
+//             next();
+//         } catch (error) {
+//             next(error);
+//         }
+//     } else {
+//         next();
+//     }
+// });
 
-FlatSchema.pre("save", async function (next) {
-    if (this.isNew) {
-        this.userName = generateDefaultUsernameAndPassword.call(this);
-        this.password = generateDefaultUsernameAndPassword.call(this);
-    }
-    next();
-});
-
+FlatSchema.plugin(AutoIncrement, { inc_field: "flatId" });
 const Flat = mongoose.model("Flat", FlatSchema);
 
 module.exports = Flat;

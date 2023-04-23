@@ -15,9 +15,10 @@ const storage = new CloudinaryStorage({
         folder: "",
         format: async (req, file) => "png",
         public_id: (req, file) => {
-            const timestamp = Date.now();
+            const { user } = req;
+            // const timestamp = Date.now();
             const originalName = file.originalname.replace(/\.[^/.]+$/, "");
-            return `image-${originalName}-${timestamp}`;
+            return `${user.userId}-${originalName}`;
         },
     },
 });

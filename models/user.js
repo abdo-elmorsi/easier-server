@@ -5,50 +5,55 @@ const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { ObjectId } = mongoose.Schema.Types;
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const UserSchema = new mongoose.Schema(
     {
         userName: {
             type: String,
-            unique: false,
             lowercase: true,
+            trim: true,
             required: [true, "Username is required!"],
         },
+
         email: {
             type: String,
-            unique: true,
             lowercase: true,
             required: false,
-            // validate(value) {
-            //     if (!validator.isEmail(value)) {
-            //         throw new Error("please enter a correct email");
-            //     }
-            // },
+            validate: [validator.isEmail, "Please Enter a Valid Email"],
         },
         phoneNumber: {
             type: String,
-            default: null,
+            trim: true,
             required: false,
-            unique: true,
-            // validate(value) {
-            //     if (!validator.isMobilePhone(value, ["ar-EG"])) {
-            //         throw new Error("Please Enter a Correct Phone Number");
-            //     }
-            // },
+            validate(value) {
+                if (!validator.isMobilePhone(value, ["ar-EG"])) {
+                    throw new Error("Please Enter a Valid Phone Number");
+                }
+            },
         },
         photo: {
             public_id: String,
             secure_url: String,
+            default: { public_id: "", secure_url: "" },
         },
         password: {
             type: String,
             required: true,
             minlength: [6, "Password must be more than 6 chart"],
+            maxlength: [20, "Password must be less than 20 chart"],
         },
         role: {
             type: String,
             enum: ["tenant", "admin", "superAdmin"],
             default: "tenant",
+        },
+        admin: {
+            type: String,
+        },
+        flat: {
+            type: ObjectId,
+            ref: "Flat",
         },
         towers: [
             {
@@ -88,31 +93,32 @@ UserSchema.methods.generateAuthToken = function () {
     return token;
 };
 
-UserSchema.pre(/^find/, function (next) {
-    this.populate({
-        path: "towers",
-        select: "name address -flats", // select only the fields you need
-    });
-    next();
-});
+// UserSchema.pre(/^find/, function (next) {
+//     this.populate({
+//         path: "towers",
+//         select: "name address -flats", // select only the fields you need
+//     });
+//     this.populate("flat");
+//     next();
+// });
 
-UserSchema.pre("remove", async function (next) {
-    try {
-        // `this` refers to the user being removed
-        await Tower.deleteMany({ owner: this._id });
-        await Flat.deleteMany({ tower: { $in: this.towers } });
-        next();
-    } catch (error) {
-        next(error);
-    }
-});
+// UserSchema.pre("remove", async function (next) {
+//     try {
+//         // `this` refers to the user being removed
+//         next();
+//     } catch (error) {
+//         next(error);
+//     }
+// });
 
 UserSchema.pre("save", async function (next) {
     if (this.isModified("password")) {
         this.password = await bcrypt.hash(this.password, 8);
     }
-    return next();
+    next();
 });
+
+UserSchema.plugin(AutoIncrement, { inc_field: "userId" });
 
 const User = mongoose.model("User", UserSchema);
 

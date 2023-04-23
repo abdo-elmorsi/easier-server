@@ -14,10 +14,16 @@ const {
 router
     .route("/")
     .post(auth, isAdmin, createFlat)
-    .get(auth, isAdmin, getAllFlats)
-    .put(auth, isAdmin, updateFlat);
+    .get(auth, isAdmin, getAllFlats);
+
 router.route("/:id").get(auth, isAdmin, getFlat);
 router.route("/:id").delete(auth, isAdmin, deleteFlat);
+
+router
+    .route("/:id")
+    .put(auth, isAdmin, updateFlat)
+    .get(auth, isAdmin, getFlat)
+    .delete(auth, isAdmin, deleteFlat);
 // .delete(auth, deleteProfile);
 
 module.exports = router;

@@ -14,10 +14,13 @@ const {
 router
     .route("/")
     .post(auth, isAdmin, createTower)
-    .get(auth, isAdmin, getAllTowers)
-    .put(auth, isAdmin, updateTower);
-router.route("/:id").get(auth, isAdmin, getTower);
-router.route("/:id").delete(auth, isAdmin, deleteTower);
+    .get(auth, isAdmin, getAllTowers);
+
+router
+    .route("/:id")
+    .put(auth, isAdmin, updateTower)
+    .get(auth, isAdmin, getTower)
+    .delete(auth, isAdmin, deleteTower);
 // .delete(auth, deleteProfile);
 
 module.exports = router;

@@ -1,16 +1,14 @@
 const User = require("../models/user");
+const Flat = require("../models/flat");
+const Tower = require("../models/tower");
 const cloudinary = require("cloudinary").v2;
 const bcrypt = require("bcryptjs");
 
 const createUser = async (req, res) => {
     try {
-        const { userName, email, phoneNumber, password, role } = req.body;
+        // const { userName, email, phoneNumber, password, role } = req.body;
         const newUser = new User({
-            userName,
-            email,
-            role,
-            phoneNumber,
-            password,
+            ...req.body,
         });
         await newUser.save();
         if (!newUser)
@@ -66,7 +64,21 @@ const deleteUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found!" });
         }
-        user.remove();
+
+        // get all towers and there ids
+        const ownedTowers = await Tower.find({ owner: user._id });
+        const ownedTowerIds = ownedTowers.map((tower) => tower._id);
+
+        // get all flats in the user towers and there ids
+        const flatsToDelete = await Flat.find({
+            tower: { $in: ownedTowerIds },
+        });
+        const flatIdsToDelete = flatsToDelete.map((flat) => flat._id);
+
+        await User.deleteMany({ flat: { $in: flatIdsToDelete } });
+        await Flat.deleteMany({ tower: { $in: ownedTowerIds } });
+        await Tower.deleteMany({ owner: user._id });
+        await user.remove();
         return res.status(200).json({ message: "User deleted successfully." });
     } catch (error) {
         return res.status(400).json({ message: error.message });
@@ -105,17 +117,13 @@ const updateProfile = async (req, res) => {
                 console.log(error);
             }
         }
-
         const updateFields = {
-            userName: req.body.userName,
-            email: req.body.email,
-            phoneNumber: req.body.phoneNumber,
+            ...req.body,
             photo: file && {
                 public_id: file.filename,
                 secure_url: file.path,
             },
         };
-
         // Update user information in the database
         const updatedUser = await User.findByIdAndUpdate(
             user._id,
