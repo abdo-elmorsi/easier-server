@@ -36,7 +36,7 @@ if (process.env.NODE_ENV === "development") {
 app.use(cookieParser());
 app.use(
     cors({
-        origin: ["http://localhost:3000", "https://easier-v1.vercel.app"],
+        origin: ["http://localhost:3000", "https://easier-v1.vercel.app","https://b2b-dashboard-telgani-pre-dev.vercel.app"],
     })
 );
 
