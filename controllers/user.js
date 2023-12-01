@@ -16,7 +16,7 @@ const createOne = async (req, res) => {
         if (!newUser)
             return res.status(400).json({ message: "failed to create user!" });
         const token = newUser.generateAuthToken();
-        return res.status(200).json({ newUser, token });
+        return res.status(200).json({ user: newUser, token });
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
