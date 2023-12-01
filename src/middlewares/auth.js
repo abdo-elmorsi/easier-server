@@ -1,25 +1,51 @@
 const Users = require("../../models/user");
 const jwt = require("jsonwebtoken");
 
-// Middleware function to authenticate user
+// Middleware function to authenticate User
+
 const auth = async (req, res, next) => {
     try {
+        // Get the token from the request headers
         const token = req.header("Authorization")?.replace("Bearer ", "");
         if (!token) {
-            res.status(401).json({ message: "Authentication failed" });
-            // throw new Error("Authentication failed");
+            return res.status(401).json({ message: "Token not provided" });
         }
-        const verified = jwt.verify(token, process.env.JWT_KEY);
-        const user = await Users.findById(verified._id);
+
+        // Verify the token using your JWT secret key
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
+
+        // Find the user in your database based on the decoded token
+        const user = await Users.findById(decoded._id);
 
         if (!user) {
-            res.status(401).json({ message: "Authentication failed" });
-            // throw Error("Authentication failed");
+            return res.status(401).json({ message: "User with this token not found" });
         }
+
+        // Attach the user to the request for future use
         req.user = user;
         next();
     } catch (error) {
-        res.status(401).json(error.message);
+        console.error(error);
+        res.status(401).json({ message: "Authentication failed" });
+    }
+};
+const tempAuth = async (req, res, next) => {
+    try {
+        let userId = req.body.user_id;
+
+        // Find the user in your database based on the decoded token
+        const user = await Users.findById(userId);
+
+        if (!user) {
+            return res.status(401).json({ message: "User with this token not found" });
+        }
+
+        // Attach the user to the request for future use
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error(error);
+        res.status(401).json({ message: "Authentication failed" });
     }
 };
 
@@ -42,6 +68,7 @@ const isSuperAdmin = checkRole("superAdmin");
 
 module.exports = {
     auth,
+    tempAuth,
     isAdmin,
     isSuperAdmin,
 };

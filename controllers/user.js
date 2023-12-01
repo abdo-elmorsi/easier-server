@@ -1,12 +1,14 @@
-const User = require("../models/user");
-const Flat = require("../models/flat");
-const Tower = require("../models/tower");
 const cloudinary = require("cloudinary").v2;
 const bcrypt = require("bcryptjs");
 
-const createUser = async (req, res) => {
+const APIFeatures = require("../src/utils/APIFeature");
+
+const User = require("../models/user");
+const Flat = require("../models/piece");
+const Tower = require("../models/tower");
+
+const createOne = async (req, res) => {
     try {
-        // const { userName, email, phoneNumber, password, role } = req.body;
         const newUser = new User({
             ...req.body,
         });
@@ -22,20 +24,39 @@ const createUser = async (req, res) => {
 
 const signIn = async (req, res) => {
     try {
-        const { userName, password } = req.body;
-        if (!userName || !password)
+        const { email, password } = req.body;
+        if (!email || !password)
             return res
                 .status(400)
-                .json({ message: "userName and password are required!" });
+                .json({ message: "email and password are required!" });
 
-        const user = await User.findUser(userName, password);
+        const user = await User.findUser(email, password);
         if (!user)
             return res
                 .status(400)
-                .json({ message: "wrong userName or password!" });
+                .json({ message: "wrong email or password!" });
 
         const token = await user.generateAuthToken();
         return res.status(200).json({ user, token });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+};
+const verify = async (req, res) => {
+    try {
+        const { _id, code } = req.body;
+        if (!_id || !code)
+            return res
+                .status(400)
+                .json({ message: "code and userId are required!" });
+
+        const user = await User.findOne({ _id });
+        if (!user)
+            return res
+                .status(400)
+                .json({ message: "wrong code or userId!" });
+
+        return res.status(200).json({ message: "welcome" });
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
@@ -44,21 +65,60 @@ const signIn = async (req, res) => {
 const getProfile = async (req, res) => {
     try {
         const { user } = req;
+        return res.status(200).json(user);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getAll = async (req, res, next) => {
+    try {
+        const query = req.query;
+
+        const apiFeatures = new APIFeatures(User.find(), query);
+        apiFeatures.filter().sort().select().search().filters().paginate();
+        const modifiedQuery = apiFeatures.getQuery();
+        const items = await modifiedQuery.exec();
+        const totalItems = await User.countDocuments(query);
+        return res.status(200).json({
+            items,
+            currentPage: query.page,
+            totalPages: Math.ceil(totalItems / query.limit),
+            totalRecords: totalItems,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getOne = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found!" });
+        }
+        return res.status(200).json(user);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const updateOne = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        await user.updateOne({ ...req.body });
+
         return res.status(200).json({ user });
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
 };
-const getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find({});
-        return res.status(200).json({ users });
-    } catch (error) {
-        return res.status(400).json({ message: error.message });
-    }
-};
 
-const deleteUser = async (req, res) => {
+
+const deleteOne = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
@@ -102,7 +162,7 @@ const updatePassword = async (req, res) => {
     }
 };
 
-const updateProfile = async (req, res) => {
+const updateProfile = async (req, res, next) => {
     try {
         const { user, file } = req;
 
@@ -114,7 +174,7 @@ const updateProfile = async (req, res) => {
             try {
                 await cloudinary.uploader.destroy(user.photo.public_id);
             } catch (error) {
-                console.log(error);
+                next(error)
             }
         }
         const updateFields = {
@@ -149,7 +209,7 @@ const updateProfile = async (req, res) => {
     }
 };
 
-const uploadProfilePic = async (req, res) => {
+const uploadProfilePic = async (req, res, next) => {
     try {
         const { user, file } = req;
         if (!file.filename || !file.path) {
@@ -159,7 +219,7 @@ const uploadProfilePic = async (req, res) => {
             try {
                 await cloudinary.uploader.destroy(user.photo.public_id);
             } catch (error) {
-                console.log(error);
+                next(error);
             }
         }
 
@@ -178,11 +238,14 @@ const uploadProfilePic = async (req, res) => {
 };
 
 module.exports = {
-    createUser,
+    createOne,
+    updateOne,
     signIn,
+    verify,
     getProfile,
-    getAllUsers,
-    deleteUser,
+    getAll,
+    getOne,
+    deleteOne,
     updatePassword,
     updateProfile,
     uploadProfilePic,

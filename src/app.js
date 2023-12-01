@@ -1,8 +1,9 @@
 require("./db/mongoose");
 const errorHandler = require("./middlewares/errorHandler");
+const logRequestDetails = require('./middlewares/logRequestDetails'); // Adjust the path to the middleware file
 
 const express = require("express");
-// to user hot reload
+// to User hot reload
 const morgan = require("morgan");
 // secure my Express app
 const helmet = require("helmet");
@@ -16,18 +17,19 @@ const cookieParser = require("cookie-parser");
 // routes
 const UserRoutes = require("../routers/user");
 const TowerRoutes = require("../routers/tower");
-const FlatRouter = require("../routers/flat");
+const PieceRouter = require("../routers/piece");
 
 const app = express();
 dotenv.config();
 
-app.use(errorHandler);
 
 //middleWares
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Credentials", true);
-    next();
+    next(); // Continue processing the request
 });
+app.use(logRequestDetails);
+
 app.use(express.json());
 app.use(helmet());
 if (process.env.NODE_ENV === "development") {
@@ -36,17 +38,18 @@ if (process.env.NODE_ENV === "development") {
 app.use(cookieParser());
 app.use(
     cors({
-        origin: ["http://localhost:3000", "https://easier-v1.vercel.app","https://b2b-dashboard-telgani-pre-dev.vercel.app"],
+        origin: ["http://localhost:3000", "https://easier-v1.vercel.app"],
     })
 );
 
 // routers
 app.use("/api/users", UserRoutes);
 app.use("/api/towers", TowerRoutes);
-app.use("/api/flats", FlatRouter);
+app.use("/api/pieces", PieceRouter);
 
 app.get("/", async (req, res) => {
     res.send("<h1>Welcome Abdo's Plz navigate to /api</h1>");
 });
+app.use(errorHandler);
 
 module.exports = app;
