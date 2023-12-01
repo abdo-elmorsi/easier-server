@@ -47,7 +47,6 @@ const getAll = async (req, res, next) => {
         const apiFeatures = new APIFeatures(Piece.find(), query);
         apiFeatures.filter().sort().select().search().filters().paginate();
         const modifiedQuery = apiFeatures.getQuery();
-
         const items = await modifiedQuery.exec();
         const totalItems = await Piece.countDocuments(query);
         return res.status(200).json({

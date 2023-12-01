@@ -30,14 +30,14 @@ const TowerSchema = new mongoose.Schema(
     }
 );
 
-TowerSchema.methods.toJSON = function () {
-    const tower = this.toObject();
-    // delete tower.owner;
-    // delete tower.createdAt;
-    delete tower.updatedAt;
-    delete tower.__v;
-    return tower;
-};
+// TowerSchema.methods.toJSON = function () {
+//     const tower = this.toObject();
+// delete tower.owner;
+// delete tower.createdAt;
+//     delete tower.updatedAt;
+//     delete tower.__v;
+//     return tower;
+// };
 
 TowerSchema.pre(/^find/, function (next) {
     this.populate({

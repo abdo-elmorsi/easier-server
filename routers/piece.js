@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { auth, isAdmin, isSuperAdmin, tempAuth } = require("../src/middlewares/auth");
+const { auth, isAdmin } = require("../src/middlewares/auth");
 
 const {
     createOne,
@@ -14,10 +14,10 @@ router
     .post(auth, isAdmin, createOne)
     .get(auth, isAdmin, getAll);
 
-
 router
     .route("/:id")
     .put(auth, isAdmin, updateOne)
     .get(auth, getOne)
     .delete(auth, isAdmin, deleteOne);
+    
 module.exports = router;
