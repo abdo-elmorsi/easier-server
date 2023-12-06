@@ -8,7 +8,7 @@ const createOne = async (req, res) => {
     try {
         const tower = new Tower({
             ...req.body,
-            owner: req.user._id,
+            owner: req.body?.owner ? req.body?.owner : req.user._id,
         });
         await tower.save();
         if (!tower) {
@@ -106,7 +106,10 @@ const updateOne = async (req, res) => {
         if (!tower) {
             return res.status(404).json({ message: "Tower not found" });
         }
-        await tower.updateOne({ ...req.body });
+        await tower.updateOne({
+            ...req.body,
+            owner: req.body?.owner ? req.body?.owner : req.user._id,
+        });
 
         return res.status(200).json({ tower });
     } catch (error) {

@@ -17,6 +17,9 @@ const createOne = async (req, res) => {
         await piece.save();
         await foundTower.updateOne({ $push: { pieces: piece._id } });
 
+        await User.findByIdAndUpdate(req.body?.user, {
+            piece: piece._id,
+        });
         // check if is not mine will create a new user and set name and pass from tower id & piece id
         // if (!isMine) {
         //     const nameAndPass = `user-${foundTower.towerId}-${piece.pieceId}`;
@@ -85,12 +88,8 @@ const deleteOne = async (req, res) => {
 
         // Remove the user associated with the piece, if the user is a user
         const user = await User.findById(piece.user);
-        // If the user is not a user, remove the piece reference from the user
-        if (user.role == "user") {
-            await user.remove();
-        } else {
-            await user.updateOne({ piece: null });
-        }
+        await user.remove();
+
         // Delete the piece itself
 
         await piece.remove();

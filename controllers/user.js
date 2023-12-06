@@ -11,6 +11,7 @@ const createOne = async (req, res) => {
     try {
         const newUser = new User({
             ...req.body,
+            ...(req.user?._id ? { admin_id: req.user._id } : {})
         });
         await newUser.save();
         if (!newUser)

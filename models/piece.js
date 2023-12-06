@@ -5,21 +5,23 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const PieceSchema = new mongoose.Schema(
     {
-        number: {
-            type: Number,
+        piece_number: {
+            type: String,
             required: [true, "Piece number is required!"],
         },
         floor_number: {
-            type: Number,
+            type: String,
             required: [true, "Floor number is required!"],
         },
         rent_price: {
             type: Number,
             required: [true, "Rent price is required!"],
+            min: 0,
         },
         maintenance_price: {
             type: Number,
             required: [true, "Maintenance price is required!"],
+            min: 0,
         },
         user: {
             type: ObjectId,
@@ -45,17 +47,16 @@ const PieceSchema = new mongoose.Schema(
 //     return piece;
 // };
 
+
+// population logic
+const populateTower = { path: "tower", select: "name towerId -owner" };
+const populateUser = { path: "user", select: "name userId" };
+
 PieceSchema.pre(/^find/, function (next) {
-    this.populate({
-        path: "tower",
-        select: "name towerId -owner",
-    });
-    this.populate({
-        path: "user",
-        select: "name userId",
-    });
-    next()
+    this.populate(populateTower).populate(populateUser);
+    next();
 });
+
 
 PieceSchema.plugin(AutoIncrement, { inc_field: "pieceId" });
 

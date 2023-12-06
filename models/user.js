@@ -51,12 +51,11 @@ const UserSchema = new mongoose.Schema(
             enum: ["user", "admin", "superAdmin"],
             default: "user",
         },
-        admin: {
-            required: false,
+        admin_id: {
+            required: [true, "Admin id is required!"],
             type: String,
         },
         piece: {
-            required: false,
             type: ObjectId,
             ref: "Piece",
         },
@@ -99,18 +98,17 @@ UserSchema.methods.generateAuthToken = function () {
     return token;
 };
 
-UserSchema.pre(/^find/, function (next) {
-    // this.populate({
-    //     path: "towers",
-    //     select: "name address", // select only the fields you need
-    // });
-    this.populate({
-        path: "piece",
-        select: "number floor_number apartmentId", // select only the fields you need
-    });
-    // this.populate("apartment");
-    next()
-});
+
+
+// UserSchema.pre(/^find/, function (next) {
+//     this.populate({
+//         path: "piece",
+//         select: "piece_number floor_number",
+//     });
+//     next()
+// });
+
+
 // UserSchema.pre("remove", async function (next) {
 //     try {
 //         // `this` refers to the user being removed
