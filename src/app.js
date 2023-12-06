@@ -15,6 +15,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 // routes
+const DashboardRoutes = require("../routers/dashboard");
 const UserRoutes = require("../routers/user");
 const TowerRoutes = require("../routers/tower");
 const PieceRouter = require("../routers/piece");
@@ -43,12 +44,14 @@ app.use(
 );
 
 // routers
+app.use("/api/dashboard", DashboardRoutes);
+
 app.use("/api/users", UserRoutes);
 app.use("/api/towers", TowerRoutes);
 app.use("/api/pieces", PieceRouter);
 
 app.get("/", async (req, res) => {
-    res.send("<h1>Welcome Abdo's Plz navigate to /api</h1>");
+    res.send("<h1>Welcome Abdo Plz navigate to /api</h1>");
 });
 app.use(errorHandler);
 
