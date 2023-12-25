@@ -13,6 +13,22 @@ const createOne = async (req, res) => {
             ...req.body,
             ...(req.user?._id ? { admin_id: req.user._id } : {})
         });
+        // check email is already exists
+        const existed_email = await User.find({ admin_id: req.user._id, email: newUser.email });
+        if (existed_email.length > 0) {
+            return res.status(400).json({ message: `Email already exists. ` + newUser.email })
+        }
+        // check phone is already exists
+        const existed_phone = await User.find({ admin_id: req.user._id, phone_number: newUser.phone_number });
+        if (existed_phone.length > 0) {
+            return res.status(400).json({ message: `Phone number already exists. ` + newUser.phone_number });
+        }
+        // check national_id is already exists
+        const existed_national_id = await User.find({ national_id: newUser.national_id });
+        if (existed_national_id.length > 0) {
+            return res.status(400).json({ message: `National id already exists. ` + newUser.national_id });
+        }
+
         await newUser.save();
         if (!newUser)
             return res.status(400).json({ message: "failed to create user!" });

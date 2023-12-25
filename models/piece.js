@@ -33,6 +33,10 @@ const PieceSchema = new mongoose.Schema(
             required: [true, "Tower is required!"],
             ref: "Tower",
         },
+        admin_id: {
+            required: [true, "Admin id is required!"],
+            type: String,
+        },
     },
     {
         timestamps: true,

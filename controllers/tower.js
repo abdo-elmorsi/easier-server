@@ -10,6 +10,14 @@ const createOne = async (req, res) => {
             ...req.body,
             owner: req.body?.owner ? req.body?.owner : req.user._id,
         });
+
+        // check name is already exists
+        const existed_name = await Tower.find({ name: tower.name });
+        if (existed_name.length > 0) {
+            return res.status(400).json({ message: `Name already exists. ` + tower.name });
+        }
+
+
         await tower.save();
         if (!tower) {
             return res.status(400).json({ message: "failed to create tower!" });

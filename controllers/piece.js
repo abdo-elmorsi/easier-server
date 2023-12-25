@@ -7,13 +7,20 @@ const APIFeatures = require("../src/utils/APIFeature");
 const createOne = async (req, res) => {
     try {
         const { tower } = req.body;
-
+        req.body.admin_id = req?.user?._id;
         const foundTower = await Tower.findById(tower);
         if (!foundTower) {
             throw new Error(`Unable to find tower by ID: ${tower}`);
         }
 
         const piece = new Piece(req.body);
+
+        // check apartment is already exists
+        const existed_apartment = await Piece.find({ tower: piece.tower, piece_number: piece.piece_number, floor_number: piece.floor_number });
+        if (existed_apartment.length > 0) {
+            return res.status(400).json({ message: `apartment already exists. piece_number: ${piece.piece_number},  floor_number: ${piece.floor_number}` });
+        }
+
         await piece.save();
         await foundTower.updateOne({ $push: { pieces: piece._id } });
 
