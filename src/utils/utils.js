@@ -44,6 +44,12 @@ const paginateAndSearch = async (model, query, req, searchFields = ["name"]) => 
     }
 };
 
+
+const generateOtp = () => {
+    const otpCode = Math.floor(Math.random() * 9000 + 1000); // Generate a 4-digit OTP
+    return otpCode
+}
 module.exports = {
     paginateAndSearch,
+    generateOtp
 };

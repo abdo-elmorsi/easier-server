@@ -1,25 +1,33 @@
 const router = require("express").Router();
 
-const { uploadImage } = require("../src/middlewares/upload");
-const { auth, isAdmin, isSuperAdmin, tempAuth } = require("../src/middlewares/auth");
+const { auth, isAdmin } = require("../src/middlewares/auth");
+const {
+    signIn,
+    verify,
+    updatePassword,
+    changePassword,
+    forgotPassword,
+
+} = require("../controllers/auth");
 const {
     createOne,
     updateOne,
-    signIn,
-    verify,
     getProfile,
     getAll,
     getOne,
     deleteOne,
-    updatePassword,
-    updateProfile,
-    uploadProfilePic,
+    // updateProfile,
+    // uploadProfilePic,
 } = require("../controllers/user");
 
 router.post("/signIn", signIn);
 router.post("/verify", verify);
 router.get("/profile", auth, getProfile);
-router.put("/password", auth, updatePassword);
+router.put("/update-password", auth, updatePassword);
+
+
+router.post("/forgot-password", forgotPassword);
+router.put("/change-password", changePassword);
 
 router
     .route("/")

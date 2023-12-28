@@ -13,6 +13,10 @@ const TowerSchema = new mongoose.Schema(
             type: String,
             required: false,
         },
+        number_of_floors: {
+            type: Number,
+            required: [true, "Number of floors is required!"],
+        },
         pieces: [
             {
                 type: ObjectId,

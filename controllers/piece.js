@@ -13,7 +13,10 @@ const createOne = async (req, res) => {
             throw new Error(`Unable to find tower by ID: ${tower}`);
         }
 
-        const piece = new Piece(req.body);
+        const piece = new Piece({
+            ...req.body,
+            is_rented: !!req.body.user,
+        });
 
         // check apartment is already exists
         const existed_apartment = await Piece.find({ tower: piece.tower, piece_number: piece.piece_number, floor_number: piece.floor_number });
@@ -110,7 +113,10 @@ const updateOne = async (req, res) => {
     try {
         const piece = await Piece.findByIdAndUpdate(
             req.params.id,
-            { ...req.body },
+            {
+                ...req.body,
+                is_rented: !!req.body.user,
+            },
             { new: true, runValidators: true }
         );
         if (!piece) {

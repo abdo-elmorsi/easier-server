@@ -1,5 +1,3 @@
-const cloudinary = require("cloudinary").v2;
-const bcrypt = require("bcryptjs");
 
 const APIFeatures = require("../src/utils/APIFeature");
 
@@ -7,7 +5,7 @@ const User = require("../models/user");
 const Flat = require("../models/piece");
 const Tower = require("../models/tower");
 
-const createOne = async (req, res) => {
+const createOne = async (req, res, next) => {
     try {
         const newUser = new User({
             ...req.body,
@@ -35,51 +33,12 @@ const createOne = async (req, res) => {
         const token = newUser.generateAuthToken();
         return res.status(200).json({ user: newUser, token });
     } catch (error) {
-        return res.status(400).json({ message: error.message });
+        next(error);
     }
 };
 
-const signIn = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password)
-            return res
-                .status(400)
-                .json({ message: "email and password are required!" });
 
-        const user = await User.findUser(email, password);
-        if (!user)
-            return res
-                .status(400)
-                .json({ message: "wrong email or password!" });
-
-        const token = await user.generateAuthToken();
-        return res.status(200).json({ user, token });
-    } catch (error) {
-        return res.status(400).json({ message: error.message });
-    }
-};
-const verify = async (req, res) => {
-    try {
-        const { _id, code } = req.body;
-        if (!_id || !code)
-            return res
-                .status(400)
-                .json({ message: "code and userId are required!" });
-
-        const user = await User.findOne({ _id });
-        if (!user)
-            return res
-                .status(400)
-                .json({ message: "wrong code or userId!" });
-
-        return res.status(200).json({ message: "welcome" });
-    } catch (error) {
-        return res.status(400).json({ message: error.message });
-    }
-};
-
-const getProfile = async (req, res) => {
+const getProfile = async (req, res, next) => {
     try {
         const { user } = req;
         return res.status(200).json(user);
@@ -120,7 +79,7 @@ const getOne = async (req, res, next) => {
     }
 };
 
-const updateOne = async (req, res) => {
+const updateOne = async (req, res, next) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
@@ -130,12 +89,12 @@ const updateOne = async (req, res) => {
 
         return res.status(200).json({ user });
     } catch (error) {
-        return res.status(400).json({ message: error.message });
+        next(error);
     }
 };
 
 
-const deleteOne = async (req, res) => {
+const deleteOne = async (req, res, next) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
@@ -158,112 +117,93 @@ const deleteOne = async (req, res) => {
         await user.remove();
         return res.status(200).json({ message: "User deleted successfully." });
     } catch (error) {
-        return res.status(400).json({ message: error.message });
+        next(error);
     }
 };
 
-const updatePassword = async (req, res) => {
-    try {
-        const { user } = req;
-        const { oldPassword, newPassword } = req.body;
-        const passwordsMatch = await bcrypt.compare(oldPassword, user.password);
-        if (!passwordsMatch) {
-            return res.status(400).json({ message: "Invalid old password" });
-        }
-        user.password = newPassword;
-        await user.save();
+// const updateProfile = async (req, res, next) => {
+//     try {
+//         const { user, file } = req;
 
-        res.status(200).json({ message: "Password updated successfully" });
-    } catch (error) {
-        return res.status(400).json({ message: error.message });
-    }
-};
+//         if (file && (!file?.filename || !file?.path)) {
+//             // If the file is missing either the filename or path property, return an error
+//             return res.status(400).json({ message: "Upload Image Failed" });
+//         }
+//         if (file && user.photo.public_id) {
+//             try {
+//                 await cloudinary.uploader.destroy(user.photo.public_id);
+//             } catch (error) {
+//                 next(error)
+//             }
+//         }
+//         const updateFields = {
+//             ...req.body,
+//             photo: file && {
+//                 public_id: file.filename,
+//                 secure_url: file.path,
+//             },
+//         };
+//         // Update user information in the database
+//         const updatedUser = await User.findByIdAndUpdate(
+//             user._id,
+//             updateFields,
+//             { new: true, runValidators: true }
+//         );
 
-const updateProfile = async (req, res, next) => {
-    try {
-        const { user, file } = req;
+//         if (!updatedUser) {
+//             return res
+//                 .status(400)
+//                 .json({ message: "Error while updating user information" });
+//         }
 
-        if (file && (!file?.filename || !file?.path)) {
-            // If the file is missing either the filename or path property, return an error
-            return res.status(400).json({ message: "Upload Image Failed" });
-        }
-        if (file && user.photo.public_id) {
-            try {
-                await cloudinary.uploader.destroy(user.photo.public_id);
-            } catch (error) {
-                next(error)
-            }
-        }
-        const updateFields = {
-            ...req.body,
-            photo: file && {
-                public_id: file.filename,
-                secure_url: file.path,
-            },
-        };
-        // Update user information in the database
-        const updatedUser = await User.findByIdAndUpdate(
-            user._id,
-            updateFields,
-            { new: true, runValidators: true }
-        );
+//         return res.status(200).json({
+//             message: "Profile updated successfully",
+//             user: updatedUser,
+//         });
+//     } catch (error) {
+//         next(error);
 
-        if (!updatedUser) {
-            return res
-                .status(400)
-                .json({ message: "Error while updating user information" });
-        }
+//     }
+// };
 
-        return res.status(200).json({
-            message: "Profile updated successfully",
-            user: updatedUser,
-        });
-    } catch (error) {
-        return res.status(400).json({
-            message: "Error updating user information",
-            error: error.message,
-        });
-    }
-};
+// const uploadProfilePic = async (req, res, next) => {
+//     try {
+//         const { user, file } = req;
+//         if (!file.filename || !file.path) {
+//             res.status(400).json({ message: "Upload Image Failed" });
+//         }
+//         if (user.photo.public_id) {
+//             try {
+//                 await cloudinary.uploader.destroy(user.photo.public_id);
+//             } catch (error) {
+//                 next(error);
+//             }
+//         }
 
-const uploadProfilePic = async (req, res, next) => {
-    try {
-        const { user, file } = req;
-        if (!file.filename || !file.path) {
-            res.status(400).json({ message: "Upload Image Failed" });
-        }
-        if (user.photo.public_id) {
-            try {
-                await cloudinary.uploader.destroy(user.photo.public_id);
-            } catch (error) {
-                next(error);
-            }
-        }
+//         user.photo = {
+//             public_id: file.filename,
+//             secure_url: file.path,
+//         };
 
-        user.photo = {
-            public_id: file.filename,
-            secure_url: file.path,
-        };
+//         await user.save();
+//         return res
+//             .status(200)
+//             .json({ message: "uploaded successfully", image: file.path });
+//     } catch (error) {
+//         next(error);
+//     }
+// };
 
-        await user.save();
-        return res
-            .status(200)
-            .json({ message: "uploaded successfully", image: file.path });
-    } catch (error) {
-        return res.status(400).json({ message: error.message });
-    }
-};
 
 module.exports = {
     createOne,
     updateOne,
-    signIn,
-    verify,
     getProfile,
     getAll,
     getOne,
     deleteOne,
-    updatePassword,
-    updateProfile,
-    uploadProfilePic,
+    // updateProfile,
+    // uploadProfilePic,
 };
+
+

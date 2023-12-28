@@ -23,6 +23,10 @@ const PieceSchema = new mongoose.Schema(
             required: [true, "Maintenance price is required!"],
             min: 0,
         },
+        is_rented: {
+            type: Boolean,
+            default: false,
+        },
         user: {
             type: ObjectId,
             required: [true, "User is required!"],
