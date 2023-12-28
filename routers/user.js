@@ -26,7 +26,7 @@ router.get("/profile", auth, getProfile);
 router.put("/update-password", auth, updatePassword);
 
 
-router.post("/forgot-password", forgotPassword);
+router.post("/forget-password", forgotPassword);
 router.put("/change-password", changePassword);
 
 router
