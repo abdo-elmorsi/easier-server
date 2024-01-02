@@ -29,7 +29,6 @@ const PieceSchema = new mongoose.Schema(
         },
         user: {
             type: ObjectId,
-            required: [true, "User is required!"],
             ref: "User",
         },
         tower: {
@@ -57,13 +56,37 @@ const PieceSchema = new mongoose.Schema(
 
 
 // population logic
-const populateTower = { path: "tower", select: "name towerId -owner" };
-const populateUser = { path: "user", select: "name userId" };
+const populateTower = {
+    path: "tower",
+    select: "name towerId -owner",
+};
+const populateUser = {
+    path: "user",
+    select: "name userId",
+};
 
 PieceSchema.pre(/^find/, function (next) {
-    this.populate(populateTower).populate(populateUser);
+    this.populate(populateUser);
+    // this.populate(populateTower)
     next();
 });
+
+
+
+PieceSchema.pre("save", async function (next) {
+    if (this.user) {
+        this.is_rented = true;
+    }
+    next();
+});
+PieceSchema.pre("updateOne", async function (next) {
+    const update = this.getUpdate();
+    if (update.user) {
+        update.is_rented = true;
+    }
+    next();
+});
+
 
 
 PieceSchema.plugin(AutoIncrement, { inc_field: "pieceId" });

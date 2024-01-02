@@ -13,10 +13,7 @@ const createOne = async (req, res) => {
             throw new Error(`Unable to find tower by ID: ${tower}`);
         }
 
-        const piece = new Piece({
-            ...req.body,
-            is_rented: !!req.body.user,
-        });
+        const piece = new Piece({ ...req.body });
 
         // check apartment is already exists
         const existed_apartment = await Piece.find({ tower: piece.tower, piece_number: piece.piece_number, floor_number: piece.floor_number });
@@ -75,7 +72,7 @@ const getAll = async (req, res, next) => {
 
 const getOne = async (req, res) => {
     try {
-        const piece = await Piece.findById(req.params.id);
+        const piece = await Piece.findById(req.params.id).populate({ path: "tower", select: "name towerId -owner" });
         if (!piece) {
             return res.status(404).json({ message: "Piece not found!" });
         }
@@ -98,7 +95,10 @@ const deleteOne = async (req, res) => {
 
         // Remove the user associated with the piece, if the user is a user
         const user = await User.findById(piece.user);
-        await user.remove();
+        if (user) {
+            user.piece = null;
+            await user.save();
+        }
 
         // Delete the piece itself
 
@@ -113,10 +113,7 @@ const updateOne = async (req, res) => {
     try {
         const piece = await Piece.findByIdAndUpdate(
             req.params.id,
-            {
-                ...req.body,
-                is_rented: !!req.body.user,
-            },
+            { ...req.body },
             { new: true, runValidators: true }
         );
         if (!piece) {
