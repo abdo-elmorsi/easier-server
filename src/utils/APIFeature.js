@@ -1,7 +1,15 @@
+const mongoose = require("mongoose");
+
 class APIFeatures {
   constructor(query, queryOptions) {
     this.query = query;
     this.queryOptions = queryOptions;
+  }
+
+  isNumericField(model, fieldName) {
+    const schema = model.schema;
+    const fieldPath = schema.path(fieldName);
+    return fieldPath && fieldPath instanceof mongoose.Schema.Types.Number;
   }
 
   filter() {
@@ -63,9 +71,15 @@ class APIFeatures {
 
     // Apply search to query if search option is provided
     if (search && searchFields) {
-      const searchQueries = searchFields.map((field) => ({
-        [field]: { $regex: new RegExp(search, 'i') },
-      }));
+      const searchQueries = searchFields.map((field) => {
+        // Check if the field is numeric before applying the regular expression
+        const isNumericField = this.isNumericField(this.query.model, field);
+        const regexValue = isNumericField ? parseFloat(search) : new RegExp(search, 'i');
+
+        return {
+          [field]: isNumericField ? regexValue : { $regex: regexValue },
+        };
+      });
       this.query = this.query.or(searchQueries);
     }
 

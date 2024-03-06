@@ -17,6 +17,7 @@ const PieceSchema = new mongoose.Schema(
             type: Number,
             required: [true, "Rent price is required!"],
             min: 0,
+            index: true, // to make it searchable
         },
         maintenance_price: {
             type: Number,
@@ -79,7 +80,9 @@ PieceSchema.pre("save", async function (next) {
     }
     next();
 });
-PieceSchema.pre("updateOne", async function (next) {
+
+// test it later
+PieceSchema.pre("findOneAndUpdate", async function (next) {
     const update = this.getUpdate();
     if (update.user) {
         update.is_rented = true;
