@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
-const Piece = require("./piece");
 const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const TowerSchema = new mongoose.Schema(
@@ -17,12 +16,6 @@ const TowerSchema = new mongoose.Schema(
             type: Number,
             required: [true, "Number of floors is required!"],
         },
-        pieces: [
-            {
-                type: ObjectId,
-                ref: "Piece",
-            },
-        ],
         owner: {
             type: ObjectId,
             required: true,

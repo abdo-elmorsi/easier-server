@@ -1,19 +1,19 @@
 const APIFeatures = require("../src/utils/APIFeature");
 
 const Piece = require("../models/piece");
-const User = require("../models/user");
 const Tower = require("../models/tower");
+const User = require("../models/user");
 
 const createOne = async (req, res) => {
     try {
         const tower = new Tower({
             ...req.body,
-            owner: req.body?.owner ? req.body?.owner : req.user._id,
+            owner: req.body?.owner || req.user?._id,
         });
 
         // check name is already exists
-        const existed_name = await Tower.find({ name: tower.name });
-        if (existed_name.length > 0) {
+        const existed_name = await Tower.findOne({ name: tower.name });
+        if (existed_name) {
             return res.status(400).json({ message: `Name already exists. ` + tower.name });
         }
 
@@ -23,8 +23,6 @@ const createOne = async (req, res) => {
             return res.status(400).json({ message: "failed to create tower!" });
         }
 
-        // add the tower to the user
-        await req.user.updateOne({ $push: { towers: tower._id } });
         return res.status(200).json({ tower });
 
     } catch (error) {
@@ -81,24 +79,32 @@ const deleteOne = async (req, res) => {
             return res.status(404).json({ message: "Tower not found!" });
         }
 
-        // Remove the tower from the user's towers array
-        await req.user.updateOne({ $pull: { towers: tower._id } });
 
-        const pieceIdsToDelete = tower.pieces;
+
+        // get all flats in the user towers and there ids
+        const piecesToDelete = await Piece.find({ tower: tower._id }).select('_id user');
+        const usersIdsToBeUpdated = piecesToDelete.map((flat) => flat.user);
+        const piecesIdsToDelete = piecesToDelete.map((flat) => flat._id);
+
 
         // If the user's piece is associated with the tower being deleted, remove the piece reference from the user
-        if (req.user.piece && pieceIdsToDelete.includes(req.user.piece)) {
+        if (req.user.piece && piecesIdsToDelete.includes(req.user.piece)) {
             await req.user.updateOne({ piece: null });
         }
 
+
+        // update all user related to these pieces
+        const updateData = { user: null };
+        await Promise.all(usersIdsToBeUpdated.map(async (userID) => {
+            try {
+                await User.findOneAndUpdate({ _id: userID }, updateData);
+            } catch (error) {
+                console.error(`Error updating user with ID ${userID}:`, error);
+            }
+        }));
+
         // Delete all pieces associated with the tower being deleted
         await Piece.deleteMany({ tower: tower._id });
-
-        // Delete all users who have a piece associated with the tower being deleted
-        await User.deleteMany({
-            role: "user",
-            piece: { $in: pieceIdsToDelete },
-        });
 
         // Delete the tower itself
         await tower.remove();
@@ -116,7 +122,7 @@ const updateOne = async (req, res) => {
         }
         await tower.updateOne({
             ...req.body,
-            owner: req.body?.owner ? req.body?.owner : req.user._id,
+            owner: req.body?.owner || req.user._id,
         });
 
         return res.status(200).json({ tower });

@@ -2,7 +2,7 @@
 const APIFeatures = require("../src/utils/APIFeature");
 
 const User = require("../models/user");
-const Flat = require("../models/piece");
+const Piece = require("../models/piece");
 const Tower = require("../models/tower");
 
 const createOne = async (req, res, next) => {
@@ -103,19 +103,21 @@ const deleteOne = async (req, res, next) => {
             return res.status(404).json({ message: "User not found!" });
         }
 
-        // get all towers and there ids
-        const ownedTowers = await Tower.find({ owner: user._id });
-        const ownedTowerIds = ownedTowers.map((tower) => tower._id);
+        // delete users under this admin
+        if (user.role !== "user") {
+            await User.deleteMany({ role: "user", admin_id: user._id });
+            // get all towers and there ids
+            const ownedTowers = await Tower.find({ owner: user._id });
+            const ownedTowerIds = ownedTowers.map((tower) => tower._id);
+            await Piece.deleteMany({ tower: { $in: ownedTowerIds } });
+            await Tower.deleteMany({ owner: user._id });
 
-        // get all flats in the user towers and there ids
-        const flatsToDelete = await Flat.find({
-            tower: { $in: ownedTowerIds },
-        });
-        const flatIdsToDelete = flatsToDelete.map((flat) => flat._id);
 
-        await User.deleteMany({ flat: { $in: flatIdsToDelete } });
-        await Flat.deleteMany({ tower: { $in: ownedTowerIds } });
-        await Tower.deleteMany({ owner: user._id });
+        } else {
+            // remove the user from the piece
+            await Piece.findOneAndUpdate({ user: user._id }, { user: null });
+        }
+
         await user.remove();
         return res.status(200).json({ message: "User deleted successfully." });
     } catch (error) {

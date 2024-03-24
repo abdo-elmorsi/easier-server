@@ -58,13 +58,7 @@ const UserSchema = new mongoose.Schema(
         piece: {
             type: ObjectId,
             ref: "Piece",
-        },
-        towers: [
-            {
-                type: ObjectId,
-                ref: "Tower",
-            },
-        ],
+        }
     },
     {
         timestamps: true,
