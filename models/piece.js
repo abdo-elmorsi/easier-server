@@ -93,6 +93,6 @@ PieceSchema.pre("findOneAndUpdate", async function (next) {
 
 PieceSchema.plugin(AutoIncrement, { inc_field: "pieceId" });
 
-const Piece = mongoose.model("Piece", PieceSchema);
+const Piece = mongoose.models.Piece || mongoose.model("Piece", PieceSchema);
 
 module.exports = Piece;

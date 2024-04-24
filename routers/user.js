@@ -34,7 +34,9 @@ router
     .post(auth, isAdmin, createOne)
     .get(auth, isAdmin, getAll)
 // .put(auth, uploadImage, updateProfile);
-
+router
+    .route("/complete-form")
+    .post(createOne)
 router
     .route("/:id")
     .put(auth, isAdmin, updateOne)

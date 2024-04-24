@@ -22,6 +22,7 @@ const PieceRoutes = require("../routers/piece");
 
 // routes / actions
 const RentalRouts = require("../routers/actions/rental");
+const RequestJoin = require("../routers/request-join");
 
 
 
@@ -54,6 +55,7 @@ app.use("/api/users", UserRoutes);
 app.use("/api/towers", TowerRoutes);
 app.use("/api/pieces", PieceRoutes);
 
+app.use("/api/request-join", RequestJoin);
 
 // routers /actions
 app.use("/api/actions/rental", RentalRouts);

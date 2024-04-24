@@ -57,4 +57,4 @@ RentalSchema.pre(/^find/, function (next) {
 });
 
 RentalSchema.plugin(AutoIncrement, { inc_field: "rental_id" });
-module.exports = mongoose.model("Rental", RentalSchema);
+module.exports = mongoose.models.Rental || mongoose.model("Rental", RentalSchema);

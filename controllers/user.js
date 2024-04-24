@@ -4,40 +4,52 @@ const APIFeatures = require("../src/utils/APIFeature");
 const User = require("../models/user");
 const Piece = require("../models/piece");
 const Tower = require("../models/tower");
+const RequestJoin = require("../models/requests-join");
 
 const createOne = async (req, res, next) => {
     try {
-        const userId = req?.user?._id || "";
+        const userId = req.user?._id || (await User.findOne({ role: "admin" }))._id;
+
         const newUser = new User({
             ...req.body,
-            ...(userId ? { admin_id: userId } : {})
+            admin_id: userId
         });
-        // check email is already exists
-        const existed_email = await User.find({ admin_id: userId, email: newUser.email });
-        if (existed_email.length > 0) {
-            return res.status(400).json({ message: `Email already exists. ` + newUser.email })
-        }
-        // check phone is already exists
-        const existed_phone = await User.find({ admin_id: userId, phone_number: newUser.phone_number });
-        if (existed_phone.length > 0) {
-            return res.status(400).json({ message: `Phone number already exists. ` + newUser.phone_number });
-        }
-        // check national_id is already exists
-        const existed_national_id = await User.find({ admin_id: userId, national_id: newUser.national_id });
-        if (existed_national_id.length > 0) {
-            return res.status(400).json({ message: `National id already exists. ` + newUser.national_id });
+
+        // Check if email, phone number, or national ID already exists
+        const existingUser = await User.findOne({
+            admin_id: userId,
+            $or: [
+                { email: newUser.email },
+                { phone_number: newUser.phone_number },
+                { national_id: newUser.national_id }
+            ]
+        });
+
+        if (existingUser) {
+            if (existingUser.email === newUser.email) {
+                return res.status(400).json({ message: `Email already exists: ${newUser.email}` });
+            } else if (existingUser.phone_number === newUser.phone_number) {
+                return res.status(400).json({ message: `Phone number already exists: ${newUser.phone_number}` });
+            } else if (existingUser.national_id === newUser.national_id) {
+                return res.status(400).json({ message: `National ID already exists: ${newUser.national_id}` });
+            }
         }
 
         await newUser.save();
-        if (!newUser)
-            return res.status(400).json({ message: "failed to create user!" });
+        if (req.body?.completeUser) {
+            await RequestJoin.findByIdAndDelete(req.body?.completeUser);
+        }
+        if (!newUser) {
+            return res.status(400).json({ message: "Failed to create user!" });
+        }
+
         const token = newUser.generateAuthToken();
         return res.status(200).json({ user: newUser, token });
     } catch (error) {
-        // res.status(500).json({ error });
         next(error);
     }
 };
+
 
 
 const getProfile = async (req, res, next) => {

@@ -128,6 +128,6 @@ UserSchema.pre("updateOne", async function (next) {
 
 UserSchema.plugin(AutoIncrement, { inc_field: "userId" });
 
-const User = mongoose.model("User", UserSchema);
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
 module.exports = User

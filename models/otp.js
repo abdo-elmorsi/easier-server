@@ -51,4 +51,4 @@ otpSchema.pre("findOneAndUpdate", async function (next) {
 //     }
 //     next();
 // });
-module.exports = mongoose.model("OTP", otpSchema);
+module.exports = mongoose.models.OTP || mongoose.model("OTP", otpSchema);

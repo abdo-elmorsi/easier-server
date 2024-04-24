@@ -57,6 +57,6 @@ TowerSchema.pre(/^find/, function (next) {
 
 
 TowerSchema.plugin(AutoIncrement, { inc_field: "towerId" });
-const Tower = mongoose.model("Tower", TowerSchema);
+const Tower = mongoose.models.Tower || mongoose.model("Tower", TowerSchema);
 
 module.exports = Tower;
