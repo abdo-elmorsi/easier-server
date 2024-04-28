@@ -1,9 +1,8 @@
 require("./db/mongoose");
 const errorHandler = require("./middlewares/errorHandler");
-const logRequestDetails = require("./middlewares/logRequestDetails"); // Adjust the path to the middleware file
+const socket = require("./utils/socket");
 
 const http = require("http");
-const socketLogic = require("./utils/socketLogic");
 
 const express = require("express");
 // to User hot reload
@@ -30,6 +29,8 @@ const RequestJoin = require("../routers/request-join");
 
 const app = express();
 const server = http.createServer(app);
+
+socket(server);
 
 dotenv.config();
 
@@ -67,10 +68,7 @@ app.use("/api/actions/rental", RentalRouts);
 app.get("/", async (req, res) => {
     res.send("<h1>Welcome Abdo Plz navigate to /api</h1>");
 });
-// Initialize Socket.IO logic
-socketLogic(server);
 
 app.use(errorHandler);
-
 
 module.exports = app;
