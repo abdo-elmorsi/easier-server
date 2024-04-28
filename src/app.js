@@ -2,6 +2,9 @@ require("./db/mongoose");
 const errorHandler = require("./middlewares/errorHandler");
 const logRequestDetails = require("./middlewares/logRequestDetails"); // Adjust the path to the middleware file
 
+const http = require("http");
+const socketLogic = require("./utils/socketLogic");
+
 const express = require("express");
 // to User hot reload
 const morgan = require("morgan");
@@ -26,6 +29,8 @@ const RentalRouts = require("../routers/actions/rental");
 const RequestJoin = require("../routers/request-join");
 
 const app = express();
+const server = http.createServer(app);
+
 dotenv.config();
 
 //middleWares
@@ -33,7 +38,7 @@ app.use((req, res, next) => {
     res.header("Access-Control-Allow-Credentials", true);
     next(); // Continue processing the request
 });
-app.use(logRequestDetails);
+// app.use(logRequestDetails);
 
 app.use(express.json());
 app.use(helmet());
@@ -62,6 +67,10 @@ app.use("/api/actions/rental", RentalRouts);
 app.get("/", async (req, res) => {
     res.send("<h1>Welcome Abdo Plz navigate to /api</h1>");
 });
+// Initialize Socket.IO logic
+socketLogic(server);
+
 app.use(errorHandler);
+
 
 module.exports = app;
