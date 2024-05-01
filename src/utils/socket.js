@@ -7,36 +7,47 @@ module.exports = (server) => {
         },
     });
 
-    let onlineUser = [];
+    const onlineUsers = new Map();
 
     const addUser = (userId, socketId) => {
-        const userExists = onlineUser.find((user) => user.userId === userId);
-        if (!userExists) {
-            onlineUser.push({ userId, socketId });
+        if (!onlineUsers.has(userId)) {
+            onlineUsers.set(userId, socketId);
         }
     };
 
     const removeUser = (socketId) => {
-        onlineUser = onlineUser.filter((user) => user.socketId !== socketId);
+        onlineUsers.forEach((id, userId) => {
+            if (id === socketId) {
+                onlineUsers.delete(userId);
+            }
+        });
     };
 
-    const getUser = (userId) => {
-        return onlineUser.find((user) => user.userId === userId);
+    const getUserSocketId = (userId) => {
+        return onlineUsers.get(userId);
+    };
+
+    const emitOnlineUsers = () => {
+        const onlineUserIds = Array.from(onlineUsers.keys());
+        io.emit("getOnlineUsers", onlineUserIds);
     };
 
     io.on("connection", (socket) => {
         socket.on("newUser", (userId) => {
             addUser(userId, socket.id);
+            emitOnlineUsers();
         });
 
         socket.on("sendMessage", (data) => {
-            const recipient = getUser(data?.recipient);
-            recipient?.socketId &&
-                io.to(recipient?.socketId).emit("getMessage", data);
+            const recipientSocketId = getUserSocketId(data?.recipient);
+            if (recipientSocketId) {
+                io.to(recipientSocketId).emit("getMessage", data);
+            }
         });
 
         socket.on("disconnect", () => {
             removeUser(socket.id);
+            emitOnlineUsers();
         });
     });
 
