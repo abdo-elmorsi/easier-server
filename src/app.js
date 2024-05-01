@@ -1,5 +1,6 @@
 require("./db/mongoose");
 const errorHandler = require("./middlewares/errorHandler");
+const logRequestDetails = require("./middlewares/logRequestDetails");
 const socket = require("./utils/socket");
 
 const http = require("http");
@@ -39,7 +40,7 @@ app.use((req, res, next) => {
     res.header("Access-Control-Allow-Credentials", true);
     next(); // Continue processing the request
 });
-// app.use(logRequestDetails);
+app.use(logRequestDetails);
 
 app.use(express.json());
 app.use(helmet());
@@ -71,4 +72,4 @@ app.get("/", async (req, res) => {
 
 app.use(errorHandler);
 
-module.exports = app;
+module.exports = server;
